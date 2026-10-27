@@ -51,6 +51,7 @@ model Student {
   user          User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
   fees          Fee[]
   results       Result[]
+  examResults   ExamResult[]
 
   @@unique([tenantId, studentNumber])
   @@unique([tenantId, id])
@@ -66,9 +67,25 @@ model CBTExam {
   duration   Int
   tenant     Tenant     @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
   questions  Question[]
+  examResults ExamResult[]
 
   @@index([tenantId])
   @@unique([tenantId, id])
+}
+
+model ExamResult {
+  id             String   @id @default(cuid())
+  tenantId       String
+  examId         String
+  studentId      String
+  score          Int
+  totalQuestions Int
+  createdAt      DateTime @default(now())
+  exam           CBTExam  @relation(fields: [tenantId, examId], references: [tenantId, id], onDelete: Cascade)
+  student        Student  @relation(fields: [tenantId, studentId], references: [tenantId, id], onDelete: Cascade)
+
+  @@unique([tenantId, examId, studentId])
+  @@index([tenantId, studentId])
 }
 
 model Question {
