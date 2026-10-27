@@ -92,6 +92,7 @@ model Fee {
   title     String
   amount    Int
   status    String   @default("unpaid")
+  paystackReference String?
   createdAt DateTime @default(now())
   tenant    Tenant   @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
   student   Student  @relation(fields: [tenantId, studentId], references: [tenantId, id], onDelete: Cascade)
