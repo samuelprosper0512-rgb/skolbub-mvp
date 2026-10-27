@@ -24,6 +24,31 @@ model Tenant {
   exams    CBTExam[]
   fees     Fee[]
   results  Result[]
+  staff    Staff[]
+  announcements Announcement[]
+}
+
+model Staff {
+  id        String   @id @default(cuid())
+  tenantId  String
+  name      String
+  email     String
+  role      String
+  createdAt DateTime @default(now())
+  tenant    Tenant   @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
+
+  @@index([tenantId])
+}
+
+model Announcement {
+  id        String   @id @default(cuid())
+  tenantId  String
+  title     String
+  content   String
+  createdAt DateTime @default(now())
+  tenant    Tenant   @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
+
+  @@index([tenantId, createdAt])
 }
 
 model User {
