@@ -8,6 +8,7 @@ const navigation = [
   { href: '/students', label: 'Students', icon: '◉' },
   { href: '/cbt', label: 'CBT Exams', icon: '✓' },
   { href: '/fees', label: 'Fees', icon: '₦' },
+  { href: '/onboarding', label: 'Onboarding Wizard', icon: '✦' },
 ];
 
 export default async function DashboardLayout({ children }: Readonly<{ children: React.ReactNode }>) {
@@ -17,8 +18,8 @@ export default async function DashboardLayout({ children }: Readonly<{ children:
 
   return (
     <div className="min-h-screen bg-[#f5f7f1] md:grid md:grid-cols-[240px_1fr]">
-      <aside className="flex flex-col border-b border-[#e1e8df] bg-white px-5 py-5 md:min-h-screen md:border-b-0 md:border-r md:px-4">
-        <Link href="/dashboard" className="flex items-center gap-3 px-2 text-lg font-bold"><span className="grid h-9 w-9 place-items-center rounded-lg bg-[#1d765b] text-white">S</span> skolhub</Link>
+      <aside style={{ borderTopColor: tenant.primaryColor, borderLeftColor: tenant.primaryColor }} className="flex flex-col border-b border-t-4 border-[#e1e8df] bg-white px-5 py-5 md:min-h-screen md:border-b-0 md:border-l-4 md:border-r md:px-4">
+        <Link href="/dashboard" className="flex items-center gap-3 px-2 text-lg font-bold"><span style={{ backgroundColor: tenant.primaryColor }} className="grid h-9 w-9 place-items-center rounded-lg text-white">S</span> skolhub</Link>
         <div className="mt-8 rounded-lg bg-[#f5f7f1] px-3 py-3"><p className="truncate text-sm font-bold">{tenant.name}</p><p className="mt-1 text-xs text-[#7b8981]">School workspace</p></div>
         <nav aria-label="Main navigation" className="mt-6 flex gap-1 overflow-x-auto md:flex-col">
           {navigation.map((item) => (

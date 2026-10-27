@@ -13,6 +13,12 @@ model Tenant {
   slug     String    @unique
   name     String
   type     String    @default("SCHOOL")
+  schoolType String  @default("secondary")
+  ownership String  @default("private")
+  primaryColor String @default("#1e40af")
+  hasComputerLabs Boolean @default(false)
+  enableCBT Boolean @default(true)
+  enableOnlineClasses Boolean @default(false)
   users    User[]
   students Student[]
   exams    CBTExam[]
