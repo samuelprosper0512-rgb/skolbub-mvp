@@ -1,0 +1,92 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Tenant {
+  id       String    @id @default(cuid())
+  tenantId String    @unique
+  slug     String    @unique
+  name     String
+  type     String    @default("SCHOOL")
+  users    User[]
+  students Student[]
+  exams    CBTExam[]
+  fees     Fee[]
+}
+
+model User {
+  id           String @id @default(cuid())
+  tenantId     String
+  email        String
+  passwordHash String
+  name         String
+  role         String @default("ADMIN")
+  tenant       Tenant @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
+  student      Student?
+
+  @@unique([tenantId, email])
+  @@index([tenantId])
+}
+
+model Student {
+  id            String @id @default(cuid())
+  tenantId      String
+  name          String
+  gradeLevel    String
+  studentNumber String
+  userId        String? @unique
+  tenant        Tenant @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
+  user          User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  fees          Fee[]
+
+  @@unique([tenantId, studentNumber])
+  @@unique([tenantId, id])
+  @@index([tenantId])
+}
+
+model CBTExam {
+  id         String     @id @default(cuid())
+  tenantId   String
+  title      String
+  subject    String
+  gradeLevel String
+  duration   Int
+  tenant     Tenant     @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
+  questions  Question[]
+
+  @@index([tenantId])
+  @@unique([tenantId, id])
+}
+
+model Question {
+  id            String  @id @default(cuid())
+  tenantId      String
+  examId        String
+  questionText  String
+  optionA       String
+  optionB       String
+  optionC       String
+  optionD       String
+  correctAnswer String
+  exam          CBTExam @relation(fields: [tenantId, examId], references: [tenantId, id], onDelete: Cascade)
+
+}
+
+model Fee {
+  id        String   @id @default(cuid())
+  tenantId  String
+  studentId String
+  title     String
+  amount    Int
+  status    String   @default("unpaid")
+  createdAt DateTime @default(now())
+  tenant    Tenant   @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
+  student   Student  @relation(fields: [tenantId, studentId], references: [tenantId, id], onDelete: Cascade)
+
+  @@index([tenantId, studentId])
+}
