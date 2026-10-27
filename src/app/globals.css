@@ -37,3 +37,40 @@ input {
   color: var(--ink);
   background: var(--lime);
 }
+
+@media print {
+  @page {
+    margin: 14mm;
+  }
+
+  body {
+    background: #fff !important;
+  }
+
+  body * {
+    visibility: hidden !important;
+  }
+
+  .report-card,
+  .report-card * {
+    visibility: visible !important;
+  }
+
+  .report-card {
+    position: absolute !important;
+    top: 0;
+    left: 0;
+    width: 100% !important;
+    border: 0 !important;
+    background: #fff !important;
+    padding: 0 !important;
+  }
+
+  .report-card table {
+    min-width: 0 !important;
+  }
+
+  .print-hidden {
+    display: none !important;
+  }
+}

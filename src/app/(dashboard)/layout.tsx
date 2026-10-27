@@ -6,6 +6,7 @@ import { getTenant } from '@/lib/tenant';
 const navigation = [
   { href: '/dashboard', label: 'Dashboard', icon: '▦' },
   { href: '/students', label: 'Students', icon: '◉' },
+  { href: '/results', label: 'Results', icon: '▤' },
   { href: '/cbt', label: 'CBT Exams', icon: '✓' },
   { href: '/fees', label: 'Fees', icon: '₦' },
   { href: '/onboarding', label: 'Onboarding Wizard', icon: '✦' },
