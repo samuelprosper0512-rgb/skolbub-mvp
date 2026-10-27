@@ -26,6 +26,7 @@ model Tenant {
   results  Result[]
   staff    Staff[]
   announcements Announcement[]
+  attendance Attendance[]
 }
 
 model Staff {
@@ -58,11 +59,14 @@ model User {
   passwordHash String
   name         String
   role         String @default("ADMIN")
+  studentId    String?
   tenant       Tenant @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
   student      Student?
+  parentStudent Student? @relation("ParentStudent", fields: [studentId], references: [id], onDelete: SetNull)
 
   @@unique([tenantId, email])
   @@index([tenantId])
+  @@index([studentId])
 }
 
 model Student {
@@ -77,10 +81,26 @@ model Student {
   fees          Fee[]
   results       Result[]
   examResults   ExamResult[]
+  parents       User[]   @relation("ParentStudent")
+  attendance    Attendance[]
 
   @@unique([tenantId, studentNumber])
   @@unique([tenantId, id])
   @@index([tenantId])
+}
+
+model Attendance {
+  id        String   @id @default(cuid())
+  tenantId  String
+  studentId String
+  date      DateTime
+  status    String
+  createdAt DateTime @default(now())
+  tenant    Tenant   @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
+  student   Student  @relation(fields: [tenantId, studentId], references: [tenantId, id], onDelete: Cascade)
+
+  @@unique([tenantId, studentId, date])
+  @@index([tenantId, date])
 }
 
 model CBTExam {

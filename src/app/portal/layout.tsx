@@ -9,6 +9,7 @@ export default function PortalLayout({ children }: Readonly<{ children: React.Re
           <nav aria-label="Student navigation" className="flex items-center gap-5">
             <Link href="/portal/cbt" className="text-sm font-semibold text-[#64736d] hover:text-[#1d765b]">My Exams</Link>
             <Link href="/portal/results" className="text-sm font-semibold text-[#64736d] hover:text-[#1d765b]">Results</Link>
+            <Link href="/portal/attendance" className="text-sm font-semibold text-[#64736d] hover:text-[#1d765b]">Attendance</Link>
             <Link href="/portal/fees" className="text-sm font-semibold text-[#64736d] hover:text-[#1d765b]">Fees</Link>
             <Link href="/" className="text-sm font-semibold text-[#64736d] hover:text-[#1d765b]">Home</Link>
           </nav>
