@@ -5,7 +5,10 @@ import { redirect } from 'next/navigation';
 
 export default async function DashboardPage() {
   const session = await requireAuth();
-  const [tenant, studentCount, announcements] = await Promise.all([
+  const firstAttendanceDay = new Date();
+  firstAttendanceDay.setUTCHours(0, 0, 0, 0);
+  firstAttendanceDay.setUTCDate(firstAttendanceDay.getUTCDate() - 6);
+  const [tenant, studentCount, announcements, fees, recentAttendance] = await Promise.all([
     getTenant(),
     db.student.count({ where: { tenantId: session.tenantId } }),
     db.announcement.findMany({
@@ -14,8 +17,29 @@ export default async function DashboardPage() {
       take: 3,
       select: { id: true, title: true, content: true, createdAt: true },
     }),
+    db.fee.findMany({
+      where: { tenantId: session.tenantId },
+      select: { amount: true, status: true },
+    }),
+    db.attendance.findMany({
+      where: {
+        tenantId: session.tenantId,
+        date: { gte: firstAttendanceDay },
+      },
+      select: { date: true, status: true },
+    }),
   ]);
   if (!tenant || tenant.tenantId !== session.tenantId) redirect('/login');
+  const feesCollected = fees.filter((fee) => fee.status === 'paid').reduce((sum, fee) => sum + fee.amount, 0);
+  const feesUnpaid = fees.filter((fee) => fee.status !== 'paid').reduce((sum, fee) => sum + fee.amount, 0);
+  const attendanceByDay = Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(firstAttendanceDay);
+    date.setUTCDate(date.getUTCDate() + index);
+    const key = date.toISOString().slice(0, 10);
+    const total = recentAttendance.filter((record) => record.date.toISOString().slice(0, 10) === key).length;
+    const present = recentAttendance.filter((record) => record.date.toISOString().slice(0, 10) === key && record.status === 'present').length;
+    return { label: date.toLocaleDateString(undefined, { weekday: 'short', timeZone: 'UTC' }), percentage: total ? Math.round((present / total) * 100) : 0 };
+  });
 
   return (
     <>
@@ -26,6 +50,11 @@ export default async function DashboardPage() {
         {tenant.enableCBT && <div className="rounded-xl border border-[#e1e8df] bg-white p-5"><p className="text-sm font-semibold text-[#64736d]">Computer-based testing</p><p className="mt-5 text-lg font-bold">CBT is enabled</p><p className="mt-1 text-xs text-[#87938c]">Manage exams for your students.</p><a href="/cbt" className="mt-4 inline-block text-sm font-bold" style={{ color: tenant.primaryColor }}>Manage exams</a></div>}
         <div className="rounded-xl border border-[#e1e8df] bg-white p-5"><p className="text-sm font-semibold text-[#64736d]">School workspace</p><p className="mt-5 text-lg font-bold">{tenant.ownership === 'public' ? 'Public school' : 'Private school'}</p><p className="mt-1 text-xs text-[#87938c]">{tenant.hasComputerLabs ? 'Computer labs available' : 'School setup is ready to customize.'}</p></div>
       </section>
+      <section aria-label="School analytics" className="mt-6 grid gap-4 sm:grid-cols-2">
+        <div className="rounded-xl border border-[#e1e8df] bg-white p-5"><p className="text-sm font-semibold text-[#64736d]">Fees collected</p><p className="mt-4 text-3xl font-bold">{new Intl.NumberFormat(undefined, { style: 'currency', currency: tenant.currency || 'NGN', maximumFractionDigits: 0 }).format(feesCollected)}</p></div>
+        <div className="rounded-xl border border-[#e1e8df] bg-white p-5"><p className="text-sm font-semibold text-[#64736d]">Unpaid fees</p><p className="mt-4 text-3xl font-bold">{new Intl.NumberFormat(undefined, { style: 'currency', currency: tenant.currency || 'NGN', maximumFractionDigits: 0 }).format(feesUnpaid)}</p></div>
+      </section>
+      <section className="mt-6 rounded-xl border border-[#e1e8df] bg-white p-5"><h2 className="font-bold">Attendance · last 7 days</h2><div className="mt-5 grid h-36 grid-cols-7 items-end gap-3">{attendanceByDay.map((day) => <div key={day.label} className="flex h-full flex-col items-center justify-end gap-2"><div title={`${day.percentage}% present`} className="w-full max-w-12 rounded-t bg-[#1d765b]" style={{ height: `${Math.max(day.percentage, 3)}%` }} /><span className="text-xs text-[#64736d]">{day.label}</span></div>)}</div></section>
       {studentCount === 0 && <section className="mt-6 rounded-xl border border-dashed border-[#cbd6cc] bg-white/60 p-6"><h2 className="text-base font-bold">Your student list starts here</h2><p className="mt-2 max-w-xl text-sm leading-6 text-[#64736d]">There are no students in this workspace yet. Once students are added, you’ll see your school’s total here.</p></section>}
     </>
   );

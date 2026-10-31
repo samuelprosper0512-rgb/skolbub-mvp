@@ -1,0 +1,17 @@
+{
+  "name": "Skolhub School Portal",
+  "short_name": "Skolhub",
+  "description": "School management, made simple.",
+  "start_url": "/portal",
+  "display": "standalone",
+  "background_color": "#f5f7f1",
+  "theme_color": "#1d765b",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

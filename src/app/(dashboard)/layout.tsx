@@ -2,16 +2,29 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { requireAuth } from '@/lib/auth';
 import { getTenant } from '@/lib/tenant';
+import NotificationBell from '@/app/notification-bell';
 
 const navigation = [
   { href: '/dashboard', label: 'Dashboard', icon: '▦' },
   { href: '/students', label: 'Students', icon: '◉' },
   { href: '/attendance', label: 'Attendance', icon: '✓' },
+  { href: '/inbox', label: 'Inbox', icon: '✉' },
+  { href: '/timetable', label: 'Timetable', icon: '▦' },
+  { href: '/library', label: 'Library', icon: '▤' },
+  { href: '/transport', label: 'Transport', icon: '▰' },
+  { href: '/behavior', label: 'Behavior', icon: '★' },
+  { href: '/health', label: 'Health', icon: '+' },
   { href: '/staff', label: 'Staff', icon: '♙' },
   { href: '/announcements', label: 'Announcements', icon: '▣' },
   { href: '/results', label: 'Results', icon: '▤' },
   { href: '/cbt', label: 'CBT Exams', icon: '✓' },
   { href: '/fees', label: 'Fees', icon: '₦' },
+  { href: '/finance', label: 'Finance', icon: '↗' },
+  { href: '/assignments', label: 'Assignments', icon: '✎' },
+  { href: '/assets', label: 'Inventory', icon: '▣' },
+  { href: '/hostels', label: 'Hostels', icon: '⌂' },
+  { href: '/certificates', label: 'Certificates', icon: '▤' },
+  { href: '/domain', label: 'Custom domain', icon: '⌘' },
   { href: '/onboarding', label: 'Onboarding Wizard', icon: '✦' },
 ];
 
@@ -31,13 +44,14 @@ export default async function DashboardLayout({ children }: Readonly<{ children:
               <span className="grid h-5 w-5 place-items-center text-base" aria-hidden="true">{item.icon}</span>{item.label}
             </Link>
           ))}
+          {session.role === 'SUPER_ADMIN' && <Link href="/super-admin" className="flex shrink-0 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold text-[#53645b] transition hover:bg-[#edf5eb] hover:text-[#1d765b]"><span aria-hidden="true">⌘</span>District overview</Link>}
         </nav>
         <div className="mt-auto hidden border-t border-[#edf0e9] pt-5 md:block"><p className="truncate px-2 text-sm font-semibold">{session.name}</p><p className="mt-1 truncate px-2 text-xs text-[#7b8981]">{session.email}</p></div>
       </aside>
       <div className="min-w-0">
         <header className="flex h-16 items-center justify-between border-b border-[#e1e8df] bg-white px-6 sm:px-9">
           <p className="text-sm font-semibold text-[#64736d]">School administration</p>
-          <span className="grid h-9 w-9 place-items-center rounded-full bg-[#e8f3e8] text-sm font-bold text-[#1d765b]">{session.name.slice(0, 1).toUpperCase()}</span>
+          <div className="flex items-center gap-3"><NotificationBell /><span className="grid h-9 w-9 place-items-center rounded-full bg-[#e8f3e8] text-sm font-bold text-[#1d765b]">{session.name.slice(0, 1).toUpperCase()}</span></div>
         </header>
         <main className="mx-auto max-w-6xl px-5 py-8 sm:px-9 sm:py-10">{children}</main>
       </div>

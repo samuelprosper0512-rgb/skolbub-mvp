@@ -1,6 +1,7 @@
 import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import FeeForm from './fee-form';
+import ExportCsvButton from '../export-csv-button';
 
 const naira = new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 0 });
 
@@ -30,6 +31,7 @@ export default async function FeesPage() {
         <h1 className="mt-1 font-serif text-3xl font-semibold tracking-tight">Fees</h1>
         <p className="mt-2 text-sm text-[#64736d]">Assign and track student fees for your school.</p>
       </div>
+      <div className="mt-5"><ExportCsvButton type="fees" /></div>
       <FeeForm students={students} />
       <section className="mt-7 overflow-hidden rounded-xl border border-[#e1e8df] bg-white">
         <div className="border-b border-[#edf0e9] px-5 py-4"><h2 className="font-bold">Assigned fees</h2><p className="mt-1 text-xs text-[#87938c]">{fees.length} {fees.length === 1 ? 'fee' : 'fees'}</p></div>

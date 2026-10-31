@@ -1,6 +1,7 @@
 import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import StudentForm from './student-form';
+import ExportCsvButton from '../export-csv-button';
 
 export default async function StudentsPage() {
   const session = await requireAuth();
@@ -11,7 +12,7 @@ export default async function StudentsPage() {
 
   return (
     <>
-      <div><p className="text-sm font-semibold text-[#1d765b]">School records</p><h1 className="mt-1 font-serif text-3xl font-semibold tracking-tight">Students</h1><p className="mt-2 text-sm text-[#64736d]">{students.length} {students.length === 1 ? 'student' : 'students'} in your school.</p></div>
+      <div className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-sm font-semibold text-[#1d765b]">School records</p><h1 className="mt-1 font-serif text-3xl font-semibold tracking-tight">Students</h1><p className="mt-2 text-sm text-[#64736d]">{students.length} {students.length === 1 ? 'student' : 'students'} in your school.</p></div><ExportCsvButton type="students" /></div>
       <StudentForm />
       <div className="mt-7 overflow-hidden rounded-xl border border-[#e1e8df] bg-white">
         {students.length === 0 ? <p className="px-5 py-12 text-center text-sm text-[#64736d]">No students have been added yet.</p> : (

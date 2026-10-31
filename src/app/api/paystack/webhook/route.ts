@@ -54,13 +54,37 @@ export async function POST(request: NextRequest) {
 
   const fee = await db.fee.findFirst({
     where: { id: feeId, tenantId },
-    select: { id: true, tenantId: true, amount: true, status: true },
+    select: { id: true, tenantId: true, studentId: true, amount: true, student: { select: { userId: true } } },
   });
   if (!fee || fee.amount * 100 !== paidAmount) return NextResponse.json({ received: true });
 
-  await db.fee.updateMany({
-    where: { id: fee.id, tenantId: fee.tenantId, status: 'unpaid' },
-    data: { status: 'paid', paystackReference: reference },
+  await db.$transaction(async (transaction) => {
+    const updated = await transaction.fee.updateMany({
+      where: { id: fee.id, tenantId: fee.tenantId, status: 'unpaid' },
+      data: { status: 'paid', paystackReference: reference },
+    });
+    if (updated.count !== 1) return;
+
+    await transaction.transaction.create({
+      data: {
+        tenantId: fee.tenantId,
+        studentId: fee.studentId,
+        feeId: fee.id,
+        amount: paidAmount,
+        platformFee: Math.round(paidAmount * 0.02),
+        status: 'success',
+      },
+    });
+    if (fee.student.userId) {
+      await transaction.notification.create({
+        data: {
+          tenantId: fee.tenantId,
+          userId: fee.student.userId,
+          title: 'Fee payment received',
+          message: `Your payment of ${fee.amount.toLocaleString()} NGN has been recorded.`,
+        },
+      });
+    }
   });
 
   return NextResponse.json({ received: true });

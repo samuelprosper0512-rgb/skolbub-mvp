@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { getTenant } from '@/lib/tenant';
 
 export async function POST(request: NextRequest) {
-  const session = await getSession();
+  const [session, tenant] = await Promise.all([getSession(), getTenant()]);
   if (!session) return NextResponse.json({ error: 'Authentication required.' }, { status: 401 });
   if (session.role !== 'ADMIN') return NextResponse.json({ error: 'Admin access required.' }, { status: 403 });
+  if (!tenant || tenant.tenantId !== session.tenantId) return NextResponse.json({ error: 'School workspace not found.' }, { status: 404 });
 
   let body: Record<string, unknown>;
   try {
@@ -28,9 +30,26 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const exam = await db.cBTExam.create({
-      data: { tenantId: session.tenantId, title, subject, gradeLevel, duration },
-      select: { id: true, title: true, subject: true, gradeLevel: true, duration: true },
+    const exam = await db.$transaction(async (transaction) => {
+      const createdExam = await transaction.cBTExam.create({
+        data: { tenantId: session.tenantId, title, subject, gradeLevel, duration },
+        select: { id: true, title: true, subject: true, gradeLevel: true, duration: true },
+      });
+      const students = await transaction.student.findMany({
+        where: { tenantId: session.tenantId, gradeLevel, userId: { not: null } },
+        select: { userId: true },
+      });
+      if (students.length) {
+        await transaction.notification.createMany({
+          data: students.flatMap(({ userId }) => userId ? [{
+            tenantId: session.tenantId,
+            userId,
+            title: 'New exam available',
+            message: `${title} in ${subject} is available for your class.`,
+          }] : []),
+        });
+      }
+      return createdExam;
     });
     return NextResponse.json({ exam }, { status: 201 });
   } catch (error) {
