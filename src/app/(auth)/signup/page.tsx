@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+const baseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN || 'skolhub.com';
+
 export default function SignupPage() {
   const router = useRouter();
   const [error, setError] = useState('');
@@ -51,19 +53,13 @@ export default function SignupPage() {
           <p className="mt-3 text-sm leading-6 text-[#64736d]">Set up your school workspace in a few steps.</p>
           <form onSubmit={handleSubmit} className="mt-8 space-y-4">
             <Field label="School name" name="schoolName" placeholder="Greenfield Academy" autoComplete="organization" />
-            <div>
-              <label htmlFor="slug" className="mb-1.5 block text-sm font-semibold">School URL</label>
-              <div className="flex overflow-hidden rounded-lg border border-[#d6ded5] bg-white focus-within:border-[#1d765b] focus-within:ring-2 focus-within:ring-[#1d765b]/15">
-                <input id="slug" name="slug" required pattern="[a-z0-9][a-z0-9-]{1,48}[a-z0-9]" minLength={3} maxLength={50} placeholder="greenfield" className="min-w-0 flex-1 px-3.5 py-3 text-sm outline-none" />
-                <span className="flex items-center border-l border-[#e7ece5] bg-[#f8faf6] px-3 text-xs text-[#7b8981]">.localhost:3000</span>
-              </div>
-            </div>
             <Field label="Admin name" name="name" placeholder="Ada Okafor" autoComplete="name" />
             <Field label="Email address" name="email" type="email" placeholder="you@school.ng" autoComplete="email" />
             <Field label="Password" name="password" type="password" placeholder="At least 8 characters" autoComplete="new-password" minLength={8} />
             {error && <p role="alert" className="rounded-lg bg-[#fff0ed] px-3.5 py-3 text-sm text-[#a6402d]">{error}</p>}
             <button type="submit" disabled={submitting} className="w-full rounded-lg bg-[#1d765b] px-4 py-3.5 text-sm font-bold text-white transition hover:bg-[#155e48] disabled:cursor-not-allowed disabled:opacity-60">{submitting ? 'Creating account…' : 'Create school account'}</button>
           </form>
+          <p className="mt-3 text-center text-xs text-[#87938c]">Your school URL on {baseDomain} can be chosen during setup.</p>
           <p className="mt-6 text-center text-sm text-[#64736d]">Already have an account? <Link href="/login" className="font-bold text-[#1d765b] hover:underline">Log in</Link></p>
         </div>
       </section>

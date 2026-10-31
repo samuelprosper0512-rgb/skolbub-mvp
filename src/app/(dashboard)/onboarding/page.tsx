@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 
 type Answers = {
   schoolName: string;
+  slug: string;
   motto: string;
   schoolType: string;
   ownership: string;
@@ -20,20 +21,43 @@ type Answers = {
   primaryColor: string;
   logoUrl: string;
 };
-const steps = ['Identity', 'Academics', 'Facilities', 'Fees', 'Branding'];
+const steps = ['Identity', 'Academics', 'Facilities', 'Fees', 'Branding', 'School URL'];
+const baseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN || 'skolhub.com';
+type SlugStatus = 'idle' | 'checking' | 'available' | 'taken' | 'error';
 
 export default function OnboardingPage() {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Answers>({
-    schoolName: '', motto: '', schoolType: 'secondary', ownership: 'private', gradingSystem: 'percentage',
+    schoolName: '', slug: '', motto: '', schoolType: 'secondary', ownership: 'private', gradingSystem: 'percentage',
     hasComputerLabs: false, enableCBT: true, enableOnlineClasses: false, enableLibrary: false, enableTransport: false,
     currency: 'NGN', paymentCycle: 'term', primaryColor: '#1e40af', logoUrl: '',
   });
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
-  function update<Key extends keyof Answers>(key: Key, value: Answers[Key]) { setAnswers((current) => ({ ...current, [key]: value })); }
+  const [slugStatus, setSlugStatus] = useState<SlugStatus>('idle');
+  function update<Key extends keyof Answers>(key: Key, value: Answers[Key]) {
+    setAnswers((current) => ({ ...current, [key]: value }));
+    if (key === 'slug') setSlugStatus('idle');
+  }
+
+  async function checkSlugAvailability(slug: string) {
+    setSlugStatus('checking');
+    try {
+      const response = await fetch(`/api/onboarding?slug=${encodeURIComponent(slug)}`, { cache: 'no-store' });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Unable to check this school URL.');
+      const available = result.available === true;
+      setSlugStatus(available ? 'available' : 'taken');
+      setError(available ? '' : 'That school URL is already in use. Choose another one.');
+      return available;
+    } catch (checkError) {
+      setSlugStatus('error');
+      setError(checkError instanceof Error ? checkError.message : 'Unable to check this school URL.');
+      return false;
+    }
+  }
 
   useEffect(() => {
     let active = true;
@@ -53,6 +77,11 @@ export default function OnboardingPage() {
   async function finish(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setError(''); setSubmitting(true);
     try {
+      if (!/^[a-z0-9](?:[a-z0-9-]{1,48}[a-z0-9])$/.test(answers.slug)) {
+        setError('Choose a school URL using 3–50 lowercase letters, numbers, or hyphens.');
+        return;
+      }
+      if (!await checkSlugAvailability(answers.slug)) return;
       const response = await fetch('/api/onboarding', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(answers) });
       const result = await response.json();
       if (!response.ok) { setError(result.error || 'Unable to save school setup.'); return; }
@@ -65,7 +94,7 @@ export default function OnboardingPage() {
     <Link href="/dashboard" className="text-sm font-semibold text-[#64736d] hover:text-[#1d765b]">← Dashboard</Link>
     <p className="mt-6 text-sm font-semibold text-[#1d765b]">School setup</p><h1 className="mt-1 font-serif text-3xl font-semibold tracking-tight">Make Skolhub yours</h1>
     <p className="mt-2 text-sm text-[#64736d]">Configure your school identity, academics, facilities, fees, and brand.</p>
-    <div className="mt-7 grid grid-cols-5 gap-2" aria-label={`Step ${step + 1} of ${steps.length}`}>{steps.map((label, index) => <div key={label} title={label} className={`h-1.5 rounded-full ${index <= step ? 'bg-[#1d765b]' : 'bg-[#dce4d8]'}`} />)}</div>
+    <div className="mt-7 grid grid-cols-6 gap-2" aria-label={`Step ${step + 1} of ${steps.length}`}>{steps.map((label, index) => <div key={label} title={label} className={`h-1.5 rounded-full ${index <= step ? 'bg-[#1d765b]' : 'bg-[#dce4d8]'}`} />)}</div>
     <p className="mt-3 text-xs font-semibold text-[#64736d]">Step {step + 1} of {steps.length}: {steps[step]}</p>
     <form onSubmit={finish} className="mt-4 rounded-xl border border-[#e1e8df] bg-white p-5 sm:p-7">
       {step === 0 && <div className="grid gap-5">
@@ -91,6 +120,21 @@ export default function OnboardingPage() {
       {step === 4 && <div className="space-y-5">
         <label className="block text-sm font-semibold">Primary brand color<div className="mt-2 flex items-center gap-4"><input type="color" value={answers.primaryColor} onChange={(e) => update('primaryColor', e.target.value)} className="h-14 w-16 cursor-pointer rounded border p-1" /><span className="font-mono">{answers.primaryColor}</span></div></label>
         <Field label="Logo URL (HTTPS)" value={answers.logoUrl} onChange={(v) => update('logoUrl', v)} maxLength={2048} />
+      </div>}
+      {step === 5 && <div className="space-y-4">
+        <p className="text-sm leading-6 text-[#64736d]">Choose the address your school community will use to access the portal.</p>
+        <label className="block text-sm font-semibold" htmlFor="school-slug">School URL</label>
+        <div className="flex overflow-hidden rounded-lg border border-[#d6ded5] bg-white focus-within:border-[#1d765b] focus-within:ring-2 focus-within:ring-[#1d765b]/15">
+          <input id="school-slug" value={answers.slug} onChange={(event) => update('slug', event.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 50))} required minLength={3} maxLength={50} pattern="[a-z0-9][a-z0-9-]{1,48}[a-z0-9]" className="min-w-0 flex-1 px-3.5 py-3 text-sm outline-none" aria-describedby="school-url-preview slug-status" />
+          <span className="flex items-center border-l border-[#e7ece5] bg-[#f8faf6] px-3 text-xs text-[#7b8981]">.{baseDomain}</span>
+        </div>
+        <p id="school-url-preview" className="text-sm text-[#64736d]">Your school portal: <span className="font-semibold text-[#1d765b]">{answers.slug || 'your-school'}.{baseDomain}</span></p>
+        <button type="button" disabled={slugStatus === 'checking' || !answers.slug} onClick={() => { setError(''); void checkSlugAvailability(answers.slug); }} className="rounded-lg border border-[#cbd6cc] px-4 py-2 text-sm font-bold text-[#1d765b] disabled:opacity-50">{slugStatus === 'checking' ? 'Checking…' : 'Check availability'}</button>
+        <p id="slug-status" aria-live="polite" className={`text-sm ${slugStatus === 'taken' || slugStatus === 'error' ? 'text-red-700' : 'text-[#1d765b]'}`}>
+          {slugStatus === 'available' && 'This school URL is available.'}
+          {slugStatus === 'taken' && 'This school URL is already in use.'}
+          {slugStatus === 'error' && 'The school URL could not be checked.'}
+        </p>
       </div>}
       {error && <p role="alert" className="mt-5 rounded-lg bg-[#fff0ed] px-3.5 py-3 text-sm text-[#a6402d]">{error}</p>}
       <div className="mt-8 flex justify-between border-t border-[#edf0e9] pt-5">
